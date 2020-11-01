@@ -1,4 +1,5 @@
 ﻿using MessagingService.API.Data.Entities;
+using MessagingService.API.Filters;
 using MessagingService.API.Models.Request;
 using MessagingService.API.Services.Message;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace MessagingService.API.Controllers
 {
+    [ServiceFilter(typeof(ActionFilter))]
     [ApiController]
     [Route("api/mesagges")]
     public class MessageController : ControllerBase
@@ -18,6 +20,7 @@ namespace MessagingService.API.Controllers
             _messageService = messageService;
         }
 
+        [ServiceFilter(typeof(ActionFilter))]
         [HttpPost]
         public async Task<IActionResult> SendMessageAsync(RequestMessageModel request)
         {
@@ -27,7 +30,8 @@ namespace MessagingService.API.Controllers
             return Ok(response.Data);
         }
 
-        [HttpGet("get-messages/{username}")]
+        [ServiceFilter(typeof(ActionFilter))]
+        [HttpGet("{username}")]
         public async Task<IActionResult> GetMessagesAsync([FromRoute] string username)
         {
             var response = await _messageService.GetMyMessagesAsync(username);

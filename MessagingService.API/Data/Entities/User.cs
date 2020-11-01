@@ -1,4 +1,5 @@
 ﻿using MessagingService.API.Models;
+using MessagingService.API.Utilities.Extensions;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
@@ -6,6 +7,7 @@ namespace MessagingService.API.Data.Entities
 {
     public class User : MongoBaseModel
     {
+
         [BsonElement("Name")]
         public string Name { get; set; }
 

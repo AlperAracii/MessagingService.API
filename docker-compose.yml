@@ -1,0 +1,14 @@
+﻿version: '3'
+services:
+    MessagingService.Api:
+        image: messagingserviceapi
+        ports:
+        - "82:32768"
+        volumes:
+        - .Users\Alper\source\repos\MessagingService.API
+    website2:
+        image: nginx
+        ports:
+        - "83:80"
+        volumes:
+        - ./

@@ -1,5 +1,6 @@
 ﻿using MessagingService.API.Data.Entities;
 using MessagingService.API.Data.Repositories;
+using MessagingService.API.Filters;
 using MessagingService.API.Models.Request;
 using MessagingService.API.Models.Response;
 using MessagingService.API.Services.Users;
@@ -20,10 +21,15 @@ namespace MessagingService.API.Services.Account
 
         public async Task<BaseResponse<BlockList>> BlockUserAsync(RequestBlockModel request)
         {
-            var nullChecker = new ObjectId();
             var response = new BaseResponse<BlockList>();
 
             var blockedUser = await _userService.GetUserByUsername(request.BlockedUserName);
+            if (blockedUser.HasError)
+            {
+                response.Errors.Add("Block işlemi sırasında hata oluştu!");
+                return response;
+            }
+
             var entitiy = new BlockList
             {
                 UserId = new ObjectId(request.UserId),
@@ -32,22 +38,17 @@ namespace MessagingService.API.Services.Account
                 BlockedUserName = request.BlockedUserName
             };
 
-            if (entitiy.UserId != nullChecker && entitiy.BlockedUserId != nullChecker)
+            var isBlocked = await _blockRepository.IsBlocked(entitiy);
+            if (isBlocked == null)
             {
-                var isBlocked = _blockRepository.IsBlocked(entitiy);
-                if (isBlocked.Result == null)
+                var result = await _blockRepository.InsertAsync(entitiy);
+                if (result.Id != default)
                 {
-                    var result = await _blockRepository.InsertAsync(entitiy);
-                    if (result.Id != default)
-                    {
-                        response.Data = result;
-                        return response;
-                    }
+                    response.Data = result;
+                    return response;
                 }
-                response.Errors.Add("Kullanıcı daha önce blocklanmış!");
-                return response;
             }
-            response.Errors.Add("Block işlemi sırasında hata oluştu!");
+            response.Errors.Add("Kullanıcı daha önce blocklanmış!");
             return response;
         }
 
@@ -64,12 +65,12 @@ namespace MessagingService.API.Services.Account
                 BlockedUserName = request.BlockedUserName
             };
 
-            var isBlocked = _blockRepository.IsBlocked(entitiy);
+            var isBlocked = await _blockRepository.IsBlocked(entitiy);
 
-            if (isBlocked.Result != null)
+            if (isBlocked != null)
             {
-                response.Data.Id = isBlocked.Result.Id;
-                await _blockRepository.DeleteAsync(isBlocked.Result.Id.ToString());
+                response.Data.Id = isBlocked.Id;
+                await _blockRepository.DeleteAsync(isBlocked.Id.ToString());
                 response.Message = "Kullanıcı unblock yapıldı.";
                 return response;
             }

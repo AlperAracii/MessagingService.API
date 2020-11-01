@@ -18,7 +18,7 @@ namespace MessagingService.API.Services.Users
 
         Task DeleteUserAsync(string id);
 
-        Task<BaseResponse<User>> LoginAsync(string username, string password);
+        Task<BaseResponse<User>> LoginAsync(RequestLoginModel request);
 
         Task<BaseResponse<User>> GetUserByUsername(string username);
 

@@ -1,11 +1,16 @@
 using MessagingService.API.Data.Repositories;
+using MessagingService.API.Filters;
 using MessagingService.API.Services.Account;
+using MessagingService.API.Services.Log;
 using MessagingService.API.Services.Message;
 using MessagingService.API.Services.Users;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
 namespace MessagingService.API
@@ -26,13 +31,35 @@ namespace MessagingService.API
             services.AddSingleton(s => new UserRepository(mongoConnectionString, "MesaggingServiceDB", "Users"));
             services.AddSingleton(s => new MessageRepository(mongoConnectionString, "MesaggingServiceDB", "Messages"));
             services.AddSingleton(s => new BlockRepository(mongoConnectionString, "MesaggingServiceDB", "BlockList"));
+            services.AddSingleton(s => new LoggingRepository(mongoConnectionString, "LogDB", "Logs"));
+            services.AddSingleton(s => new AudithLoggingRepository(mongoConnectionString, "LogDB", "AudithLogs"));
 
-            services.AddSingleton(s => new LogginRepository(mongoConnectionString, "LogDB", "Logs"));
 
 
             services.AddTransient<IUserService, UserService>();
             services.AddTransient<IMessageService, MessageService>();
             services.AddTransient<IAccountService, AccountService>();
+            services.AddTransient<ILogService, LogService>();
+
+
+            services.AddScoped<ActionFilter>();
+            services.AddScoped<GlobalExceptionFilter>();
+
+            services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+            services.AddMvc(options => options.Filters.Add(typeof(GlobalExceptionFilter)))
+                .SetCompatibilityVersion(Microsoft.AspNetCore.Mvc.CompatibilityVersion.Version_3_0)
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.PropertyNamingPolicy = null;
+                    options.JsonSerializerOptions.DictionaryKeyPolicy = null;
+                    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                });
+
+            services.AddMvc(options =>
+            {
+                options.Filters.Add(typeof(ActionFilter));
+            }).SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
 
 
             services.AddSwaggerGen(c =>
@@ -51,7 +78,6 @@ namespace MessagingService.API
             });
 
             services.AddControllers();
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -1,19 +1,21 @@
 ﻿using MessagingService.API.Data.Entities;
 using MessagingService.API.Data.Repositories;
-using MessagingService.API.Models;
 using MessagingService.API.Models.Request;
 using MessagingService.API.Models.Response;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
+using MessagingService.API.Utilities.Extensions;
 
 namespace MessagingService.API.Services.Users
 {
     public class UserService : IUserService
     {
-        private readonly UserRepository _userRepository;        
+        private readonly UserRepository _userRepository;  
+        
 
-        public UserService(UserRepository userRepository, LogginRepository logginRepository)
+        public UserService(UserRepository userRepository)
         {
             _userRepository = userRepository;
         }
@@ -44,9 +46,10 @@ namespace MessagingService.API.Services.Users
         public async Task<BaseResponse<User>> InsertUserAsync(User model)
         {
             var response = new BaseResponse<User>();
-            var isExist = await GetUserByUsername(model.UserName);
-            if (isExist.Data.UserName == null)
+            var user = await GetUserByUsername(model.UserName);
+            if (string.IsNullOrEmpty(user.Data.UserName))
             {
+                model.Password = model.Password.MD5Hash();
                 var result = await _userRepository.InsertAsync(model);
                 if (result.Id != default)
                 {
@@ -73,22 +76,16 @@ namespace MessagingService.API.Services.Users
             return response;
         }
 
-        public async Task<BaseResponse<User>> LoginAsync(string username, string password)
+        public async Task<BaseResponse<User>> LoginAsync(RequestLoginModel request)
         {
             var response = new BaseResponse<User>();
-            var document = await _userRepository.GetByLoginInfo(username);
+            var document = await _userRepository.LoginAsync(request);
             if (document != null)
             {
-                if (document.Password == password)
-                {
                     response.Data = document;
-                    response.Message = "Giriş Başarılı";
                     return response;
-                }
-                response.Errors.Add($"Şifre yanlış!");
-                return response;
             }
-            response.Errors.Add($"{username} adlı kullanıcı bulunamadı");
+            response.Errors.Add($"Kullanıcı adı veya şifre yanlış!");
             return response;
         }
 
