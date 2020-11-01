@@ -14,11 +14,9 @@ namespace MessagingService.API.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly LoggingRepository _logger;
-        public UserController(IUserService userService, LoggingRepository logger)
+        public UserController(IUserService userService)
         {
             _userService = userService;
-            _logger = logger;
         }
 
         [ServiceFilter(typeof(ActionFilter))]
