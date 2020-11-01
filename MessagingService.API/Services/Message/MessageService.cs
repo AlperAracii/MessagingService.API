@@ -1,7 +1,9 @@
 ﻿using MessagingService.API.Data.Entities;
 using MessagingService.API.Data.Repositories;
+using MessagingService.API.Models.Request;
 using MessagingService.API.Models.Response;
 using Microsoft.EntityFrameworkCore.Internal;
+using MongoDB.Bson;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -20,28 +22,30 @@ namespace MessagingService.API.Services.Message
             _blockRepository = blockRepository;
         }
 
-        public async Task<BaseResponse<Messages>> SendMessage(Messages model)
+        public async Task<BaseResponse<Messages>> SendMessage(RequestMessageModel request)
         {
             var response = new BaseResponse<Messages>();
-
-            var user = await _userRepository.GetByUserNameAsync(model.FromUserName);
-            var toUser = await _userRepository.GetByUserNameAsync(model.ToUserName);
-
-            model.FromId = user.Id;
-            model.SendToId = toUser.Id;
-
-            var blocked = new BlockList
-            {
-                UserId = user.Id,
-                BlockedUserId = toUser.Id
-            };
+            var toUser = await _userRepository.GetByUserNameAsync(request.ToUserName);
 
             if (toUser != null)
             {
-                var isBlocked = await _blockRepository.IsBlocked(blocked);
+                var entity = new Messages
+                {
+                    FromId = new ObjectId(request.FromId),
+                    SendToId = toUser.Id,
+                    FromUserName = request.FromUserName,
+                    ToUserName = request.ToUserName,
+                    Message = request.Message
+                };
+                var isBlocked = await _blockRepository.IsBlocked(new BlockList
+                {
+                    UserId = entity.FromId,
+                    BlockedUserId = toUser.Id
+                });
+
                 if (isBlocked == null)
                 {
-                    var result = await _messageRepository.InsertAsync(model);
+                    var result = await _messageRepository.InsertAsync(entity);
                     if (result.Id != default)
                     {
                         response.Data = result;
@@ -58,11 +62,11 @@ namespace MessagingService.API.Services.Message
             return response;
         }
 
-        public async Task<BaseResponse<List<Messages>>> GetMyMessagesAsync(string userName)
+        public async Task<BaseResponse<List<Messages>>> GetMyMessagesAsync(string username)
         {
             var response = new BaseResponse<List<Messages>>();
 
-            var user = await _userRepository.GetByUserNameAsync(userName);
+            var user = await _userRepository.GetByUserNameAsync(username);
 
             var messages = await _messageRepository.GetMyMessagesAsync(user.Id);
             if (messages != null)

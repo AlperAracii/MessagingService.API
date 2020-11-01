@@ -16,7 +16,6 @@ namespace MessagingService.API.Services.Users
         public UserService(UserRepository userRepository, LogginRepository logginRepository)
         {
             _userRepository = userRepository;
-            _logginRepository = logginRepository;
         }
 
         public async Task DeleteUserAsync(string id)

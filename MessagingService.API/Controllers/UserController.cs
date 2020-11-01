@@ -18,7 +18,7 @@ namespace MessagingService.API.Controllers
         }
 
         [HttpGet("id")]
-        public async Task<IActionResult> GetUserByIdAsync(string id)
+        public async Task<IActionResult> GetUserByIdAsync([FromRoute] string id)
         {
             var response = await _userService.GetUserByIdAsync(id);
             if (response != default)
@@ -27,7 +27,7 @@ namespace MessagingService.API.Controllers
         }
 
         [HttpGet("username")]
-        public async Task<IActionResult> GetUserByUsername(string username)
+        public async Task<IActionResult> GetUserByUsername([FromRoute] string username)
         {
             var response = await _userService.GetUserByUsername(username);
             if (response != default)
@@ -65,7 +65,7 @@ namespace MessagingService.API.Controllers
         }
 
         [HttpDelete]
-        public async Task<IActionResult> DeleteUserAsync(string id)
+        public async Task<IActionResult> DeleteUserAsync([FromRoute] string id)
         {
             await _userService.DeleteUserAsync(id);
             return Ok();

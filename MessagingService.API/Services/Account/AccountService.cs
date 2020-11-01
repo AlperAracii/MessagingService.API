@@ -1,5 +1,6 @@
 ﻿using MessagingService.API.Data.Entities;
 using MessagingService.API.Data.Repositories;
+using MessagingService.API.Models.Request;
 using MessagingService.API.Models.Response;
 using MessagingService.API.Services.Users;
 using MongoDB.Bson;
@@ -17,22 +18,26 @@ namespace MessagingService.API.Services.Account
             _userService = userService;
         }
 
-        public async Task<BaseResponse<BlockList>> BlockUserAsync(BlockList model)
+        public async Task<BaseResponse<BlockList>> BlockUserAsync(RequestBlockModel request)
         {
             var nullChecker = new ObjectId();
             var response = new BaseResponse<BlockList>();
 
-            var user = await _userService.GetUserByUsername(model.UserName);
-            var blockedUser = await _userService.GetUserByUsername(model.BlockedUserName);
-            model.UserId = user.Data.Id;
-            model.BlockedUserId = blockedUser.Data.Id;
-
-            if (model.UserId != nullChecker || model.BlockedUserId != nullChecker)
+            var blockedUser = await _userService.GetUserByUsername(request.BlockedUserName);
+            var entitiy = new BlockList
             {
-                var isBlocked = _blockRepository.IsBlocked(model);
-                if (isBlocked.Result.Id == nullChecker)
+                UserId = new ObjectId(request.UserId),
+                BlockedUserId = blockedUser.Data.Id,
+                UserName = request.UserName,
+                BlockedUserName = request.BlockedUserName
+            };
+
+            if (entitiy.UserId != nullChecker && entitiy.BlockedUserId != nullChecker)
+            {
+                var isBlocked = _blockRepository.IsBlocked(entitiy);
+                if (isBlocked.Result == null)
                 {
-                    var result = await _blockRepository.InsertAsync(model);
+                    var result = await _blockRepository.InsertAsync(entitiy);
                     if (result.Id != default)
                     {
                         response.Data = result;
@@ -46,19 +51,22 @@ namespace MessagingService.API.Services.Account
             return response;
         }
 
-        public async Task<BaseResponse<BlockList>> UnblockUserAsync(BlockList model)
+        public async Task<BaseResponse<BlockList>> UnblockUserAsync(RequestBlockModel request)
         {
-            var nullChecker = new ObjectId();
             var response = new BaseResponse<BlockList>();
 
-            var user = await _userService.GetUserByUsername(model.UserName);
-            var blockedUser = await _userService.GetUserByUsername(model.BlockedUserName);
-            model.UserId = user.Data.Id;
-            model.BlockedUserId = blockedUser.Data.Id;
+            var blockedUser = await _userService.GetUserByUsername(request.BlockedUserName);
+            var entitiy = new BlockList
+            {
+                UserId = new ObjectId(request.UserId),
+                BlockedUserId = blockedUser.Data.Id,
+                UserName = request.UserName,
+                BlockedUserName = request.BlockedUserName
+            };
 
-            var isBlocked = _blockRepository.IsBlocked(model);
+            var isBlocked = _blockRepository.IsBlocked(entitiy);
 
-            if (isBlocked.Result.Id != nullChecker)
+            if (isBlocked.Result != null)
             {
                 response.Data.Id = isBlocked.Result.Id;
                 await _blockRepository.DeleteAsync(isBlocked.Result.Id.ToString());

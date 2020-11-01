@@ -1,4 +1,5 @@
 ﻿using MessagingService.API.Data.Entities;
+using MessagingService.API.Models.Request;
 using MessagingService.API.Services.Message;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
@@ -18,18 +19,18 @@ namespace MessagingService.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SendMessageAsync(Messages model)
+        public async Task<IActionResult> SendMessageAsync(RequestMessageModel request)
         {
-            var response = await _messageService.SendMessage(model);
+            var response = await _messageService.SendMessage(request);
             if (response.Errors.Any())
                 return BadRequest(response.Errors);
             return Ok(response.Data);
         }
 
-        [HttpGet("get-messages")]
-        public async Task<IActionResult> GetMessagesAsync(string userName)
+        [HttpGet("get-messages/{username}")]
+        public async Task<IActionResult> GetMessagesAsync([FromRoute] string username)
         {
-            var response = await _messageService.GetMyMessagesAsync(userName);
+            var response = await _messageService.GetMyMessagesAsync(username);
             if (response.Errors.Any())
                 return BadRequest(response.Errors);
             return Ok(response.Data);

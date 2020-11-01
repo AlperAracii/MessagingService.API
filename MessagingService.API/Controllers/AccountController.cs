@@ -21,8 +21,8 @@ namespace MessagingService.API.Controllers
             _accountService = accountService;
         }
 
-        [HttpGet("login")]
-        public async Task<IActionResult> LoginUserAsync(string username, string password)
+        [HttpGet("login/{username}")]
+        public async Task<IActionResult> LoginUserAsync([FromRoute]string username, [FromHeader] string password)
         {
             var response = await _userService.LoginAsync(username, password);
             if (response.Errors.Any())
@@ -31,18 +31,18 @@ namespace MessagingService.API.Controllers
         }
 
         [HttpPost("block")]
-        public async Task<IActionResult> BlockUserAsync(BlockList model)
+        public async Task<IActionResult> BlockUserAsync(RequestBlockModel request)
         {
-            var response = await _accountService.BlockUserAsync(model);
+            var response = await _accountService.BlockUserAsync(request);
             if (response.Errors.Any())
                 return BadRequest(response.Errors);
-            return Ok(response.Message);
+            return Ok(response);
         }
 
         [HttpDelete("unblock")]
-        public async Task<IActionResult> UnblockUserAsync(BlockList model)
+        public async Task<IActionResult> UnblockUserAsync(RequestBlockModel request)
         {
-            var response = await _accountService.UnblockUserAsync(model);
+            var response = await _accountService.UnblockUserAsync(request);
             if (response.Errors.Any())
                 return BadRequest(response.Errors);
             return Ok(response.Message);
